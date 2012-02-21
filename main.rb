@@ -15,25 +15,25 @@ CALLER_ID = '+15128616593'.freeze
 post '/sms' do
 
   # Break down the message object into usable variables
-  @from = "+1" << params[:From] # The @from variable is the user's cell phone number
-  @body = params[:Body] # The body of the text message
+  @from = "+1" << params['From'] # The @from variable is the user's cell phone number
+  @body = params['Body'] # The body of the text message
 
   @broadcasters = ['+16464131271', '+14158305533']
   @on = false # Whether or not the user wants texts
 
   # If a phone number is not in the database...
-  if User.first(:number => @from) == nil
+  if User.first(number: @from) == nil
     # Create a row in the database
     User.create({
-      :number => @from,
-      :on => @on
+      number: @from,
+      on: @on
     })
   end
 
   # If broadcaster texts a message, send it to everybody
   # with @on = true
   if @broadcasters.include?(@from)
-    User.all(:on => true).each do |user|
+    User.all(on: true).each do |user|
       Twilio::SMS.create from: CALLER_ID, to: user[:number], body: @body
     end
 
@@ -75,7 +75,7 @@ end
 
 # Functions
 def update_database()
-  @user = User.first(:number => @from)
-  @user.update_attributes(:on => @on)
+  @user = User.first(number: @from)
+  @user.update_attributes(on: @on)
   @user.save
 end
