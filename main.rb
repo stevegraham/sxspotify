@@ -33,7 +33,7 @@ post '/sms' do
   # If broadcaster texts a message, send it to everybody
   # with @on = true
   if @broadcasters.include?(@from)
-    for user in User.all(:on=>true)
+    User.all(:on => true).each do |user|
       Twilio::SMS.create from: CALLER_ID, to: user[:number], body: @body
     end
 
