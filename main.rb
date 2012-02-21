@@ -1,16 +1,18 @@
 require 'rubygems'
 require 'sinatra'
-require 'twilio-ruby'
+require 'twilio-rb'
 require 'mongo_mapper'
 require './model'
 
+Twilio::Config.setup \
+  account_sid: 'AC92f0c87900e80c41ecfde5f7e6a9f0e3',
+  auth_token:  '5ec9e80206da8b8779b370c73f74df65'
+
+# This is our Twilio number
+CALLER_ID = '+15128616593'.freeze
+
 # When someone sends a text message to us, this code runs
 post '/sms' do
-  # Initialize Twilio
-  @sid = 'AC92f0c87900e80c41ecfde5f7e6a9f0e3'
-  @auth_token = '5ec9e80206da8b8779b370c73f74df65'
-  @us = '+15128616593' # This is our Twilio number
-  @client = Twilio::REST::Client.new @sid, @auth_token
 
   # Break down the message object into usable variables
   @from = "+1" << params[:From] # The @from variable is the user's cell phone number
@@ -32,11 +34,7 @@ post '/sms' do
   # with @on = true
   if @broadcasters.include?(@from)
     for user in User.all(:on=>true)
-      @client.account.sms.messages.create(
-        :from => @us,
-        :to => user[:number],
-        :body => @body
-      )
+      Twilio::SMS.create from: CALLER_ID, to: user[:number], body: @body
     end
 
   else
@@ -52,7 +50,7 @@ post '/sms' do
       @message = 'Okay, you\'re unsubscribed. Text "on" to turn on notifications.'
       @on = false
       update_database()
-  
+
     elsif @body == 'on' or @body == 'On'
 
       @message = 'Welcome back! Notifications from Spotify are on. Stay tuned for updates about secret shows at SxSW'
@@ -69,12 +67,8 @@ post '/sms' do
 
     end
 
-      @client.account.sms.messages.create(
-        :from => @us,
-        :to => @from,
-        :body => @message
-      )
-  end
+      Twilio::SMS.create from: CALLER_ID, to: @from, body: @message
+    end
 
 end
 
